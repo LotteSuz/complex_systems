@@ -110,7 +110,6 @@ class Ant(Agent):
                 if self.model.grid.is_cell_empty(new_position) == True:
                     self.model.grid.move_agent(self, new_position)
                 ## if the next position is boundary, then go back to the ants initial place
-
                 elif type(self.model.grid[new_position[0]][new_position[1]]) is Fence:
                     new_position = self.random.choice(ants_init)
                     if self.model.grid.is_cell_empty(new_position) == True:
@@ -126,6 +125,7 @@ class Ant(Agent):
                     new_position = self.random.choice(ants_init)
                     if self.model.grid.is_cell_empty(new_position) == True:
                         self.model.grid.move_agent(self, new_position)
+                ## if it is empty then move into this place
                 elif self.model.grid.is_cell_empty(new_position):
                     self.model.grid.move_agent(self, new_position)
 
