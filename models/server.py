@@ -6,7 +6,7 @@ from mesa.visualization.modules import CanvasGrid
 from mesa.visualization.ModularVisualization import ModularServer
 
 from .model import Anthill
-from .agent import Ant, Brood
+from .agent import Ant, Brood,Fence
 
 # IMPORTANT: the WIDTH and HEIGHT parameters are also in model.py; make sure
 # to change those as well if you want to adjust the grid size
@@ -31,6 +31,8 @@ def agent_portrayal(agent):
     ## use this portrayal for ant visuals
     if type(agent) is Ant:
         portrayal = {"Shape":"ant.jpg", "Layer":0}
+    if type(agent) is Fence:
+        portrayal = {"Shape":"Fence.jpg", "Layer":0}
 
     return portrayal
 

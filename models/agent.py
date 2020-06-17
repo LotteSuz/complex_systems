@@ -2,6 +2,7 @@
 Here are all the different types of agents.
 Ants: move randomly
 Brood: don't do anything but exist
+Fence:Boundar
 """
 from mesa import Agent
 import numpy as np
@@ -10,41 +11,46 @@ import numpy as np
 # for list of boundary coordinates, wasn't sure where else to put it
 WIDTH = 20
 HEIGHT = 20
-bound_vals = []
-for i in range(1,WIDTH-1):
-    for j in range(1,HEIGHT-1):
-        if i == 1 or i == WIDTH-2 or j ==1 or j == (HEIGHT-2):
-            bound_vals.append((i,j))
+bound_vals=[]
+brood_init=[]
+ants_init=[]
+for i in range(WIDTH):
+    for j in range(HEIGHT):
+        if i == 2 and 2 <= j <= HEIGHT - 3:
+            bound_vals.append((i, j))
+        elif i == WIDTH - 3 and 2 <= j <= HEIGHT - 3:
+            bound_vals.append((i, j))
+        elif 3 <= i <= WIDTH - 4 and j == 2:  ##aviod overlap
+            bound_vals.append((i, j))
+        elif 3 <= i <= WIDTH - 4 and j == HEIGHT - 3:  ##aviod overlap
+            bound_vals.append((i, j))
+        elif 2 < i < WIDTH - 3 and 2 < j < HEIGHT - 3:
+            brood_init.append((i, j))
+        else:
+            ants_init.append((i, j))
 
 
 class Ant(Agent):
-    def __init__(self, unique_id, model):
-        super().__init__(unique_id, model)
+    def __init__(self, id, model):
+        super().__init__(id, model)
+
 
     def force_calc(self):
         """ Calculate the force acting on the ant. """
 
-        # Make a list of possible steps for each ant
-        possible_steps = self.model.grid.get_neighbors(
-            self.pos,
-            moore=False,
-            include_center=False)
-
-        possible_steps = [a.pos for a in possible_steps]
-
-        # print('possible_steps',possible_steps,self.pos)
+        ##check the neighbor if it is Ant
 
         # Calculate the force in x and y direction 
         Fx = 0
-        if (self.pos[0]-1,self.pos[1]) in possible_steps:
+        if type(self.model.grid[self.pos[0]-1][self.pos[1]]) is Ant:
             Fx += 1
-        if (self.pos[0]+1,self.pos[1]) in possible_steps:
+        if type(self.model.grid[self.pos[0]+1][self.pos[1]]) is Ant:
             Fx -= 1
 
         Fy = 0 
-        if (self.pos[0],self.pos[1]-1) in possible_steps:
+        if type(self.model.grid[self.pos[0]][self.pos[1]-1]) is Ant:
             Fy += 1
-        if (self.pos[0],self.pos[1]+1) in possible_steps:
+        if type(self.model.grid[self.pos[0]][self.pos[1]+1]) is Ant:
             Fy -= 1
 
         # Magnitude of the force
@@ -89,47 +95,50 @@ class Ant(Agent):
         return n
 
     def move(self):
-        if self.pos:
-
-            Fx,Fy,F = self.force_calc()
-
-            if F == 0:
-                # When there are no neighbors, don't move
-                c = (0,0)
-            else:
-
-                # Calculate the new preferred direction, rounding to nearest integer
-                c = (int(round(Fx/F)), int(round(Fy/F)))
-
-            # ---> Comment out next line for stochastic thingy
-            # c = self.stoch_move(c)
-            
-            new_position = (self.pos[0]+c[0], self.pos[1] + c[1])
-            # print('New position',new_position)
-
-            # Only move if the new cell is empty
-            if self.model.grid.is_cell_empty(new_position):
-                self.model.grid.move_agent(self, new_position)
-
-                # Remove ant if it has moved onto the boundary
-                if new_position in bound_vals:
-                    self.model.grid.remove_agent(self)
-
-        else:
-            
-            # Place a new ant with a probability
+        ## check if the ants can go into the internal
+        if self.pos in ants_init:
             if self.random.uniform(0, 1) > 0.5:
+                new_position = self.random.choice(brood_init)
+                if self.model.grid.is_cell_empty(new_position) == True:
+                    self.model.grid.move_agent(self, new_position)
+        else:
+            Fx, Fy, F = self.force_calc()
+            if F == 0:
+                # When there are no neighbors, move into any neighbor
+                possible_steps = self.model.grid.get_neighborhood(self.pos,moore=False,include_center=False)
+                new_position = self.random.choice(possible_steps)
+                if self.model.grid.is_cell_empty(new_position) == True:
+                    self.model.grid.move_agent(self, new_position)
+                ## if the next position is boundary, then go back to the ants initial place
 
-                # Generate random coordinate on the boundary (that doesn't contain ant)
-                xy = self.random.choice(bound_vals)
-                while self.model.grid.is_cell_empty(xy) == False:
-                    xy = self.random.choice(bound_vals)
-                self.model.grid.place_agent(self, xy)
+                elif type(self.model.grid[new_position[0]][new_position[1]]) is Fence:
+                    new_position = self.random.choice(ants_init)
+                    if self.model.grid.is_cell_empty(new_position) == True:
+                        self.model.grid.move_agent(self, new_position)
+
+            else:
+                # Calculate the new preferred direction, rounding to nearest integer
+                c = (int(round(Fx / F)), int(round(Fy / F)))
+                new_position = (self.pos[0] + c[0], self.pos[1] + c[1])
+
+                    # ant if it has moved onto the boundary and it will go back to the area
+                if type(self.model.grid[new_position[0]][new_position[1]]) is Fence:
+                    new_position = self.random.choice(ants_init)
+                    if self.model.grid.is_cell_empty(new_position) == True:
+                        self.model.grid.move_agent(self, new_position)
+                elif self.model.grid.is_cell_empty(new_position):
+                    self.model.grid.move_agent(self, new_position)
+
 
     def step(self):
         self.move()
 
 class Brood(Agent):
+    def __init__(self, id, model):
+        super().__init__(id, model)
+
+
+class Fence(Agent):
     def __init__(self, id, model):
         super().__init__(id, model)
 
