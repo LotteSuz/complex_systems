@@ -139,7 +139,7 @@ class Anthill(Model):
         ## rechange the boundary
         for site in self.neigh_bound:
             self.tau[site[0]][site[1]] = 0
-        ##calculate the sigmastar
+        ##calculate the sigmastarr
         sigmastar = sigma/mean_tau_ant
 
         return mean_tau_ant,np.sqrt(sigma),sigmastar
