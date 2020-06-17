@@ -2,7 +2,7 @@
 Here are all the different types of agents.
 Ants: move randomly
 Brood: don't do anything but exist
-Fence:Boundar
+Fence:Boundarary
 """
 from mesa import Agent
 import numpy as np
