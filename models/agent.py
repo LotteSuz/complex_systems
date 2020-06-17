@@ -12,23 +12,13 @@ import numpy as np
 WIDTH = 20
 HEIGHT = 20
 bound_vals=[]
-brood_init=[]
-ants_init=[]
+neigh_bound=[]
+
+
 for i in range(WIDTH):
     for j in range(HEIGHT):
-        if i == 2 and 2 <= j <= HEIGHT - 3:
-            bound_vals.append((i, j))
-        elif i == WIDTH - 3 and 2 <= j <= HEIGHT - 3:
-            bound_vals.append((i, j))
-        elif 3 <= i <= WIDTH - 4 and j == 2:  ##aviod overlap
-            bound_vals.append((i, j))
-        elif 3 <= i <= WIDTH - 4 and j == HEIGHT - 3:  ##aviod overlap
-            bound_vals.append((i, j))
-        elif 2 < i < WIDTH - 3 and 2 < j < HEIGHT - 3:
-            brood_init.append((i, j))
-        else:
-            ants_init.append((i, j))
-
+        if (i == 1 or i == WIDTH - 2) or (j == 1 or j == HEIGHT-2):
+            neigh_bound.append((i,j))
 
 class Ant(Agent):
     def __init__(self, id, model):
@@ -38,19 +28,25 @@ class Ant(Agent):
     def force_calc(self):
         """ Calculate the force acting on the ant. """
 
-        ##check the neighbor if it is Ant
+        ##check the neighbor if it is Ant or fence
 
         # Calculate the force in x and y direction 
+
         Fx = 0
-        if type(self.model.grid[self.pos[0]-1][self.pos[1]]) is Ant:
+
+        if (type(self.model.grid[self.pos[0]-1][self.pos[1]]) is Ant or 
+            type(self.model.grid[self.pos[0]-1][self.pos[1]]) is Fence):
             Fx += 1
-        if type(self.model.grid[self.pos[0]+1][self.pos[1]]) is Ant:
+        if (type(self.model.grid[self.pos[0]+1][self.pos[1]]) is Ant or 
+            type(self.model.grid[self.pos[0]+1][self.pos[1]]) is Fence):
             Fx -= 1
 
         Fy = 0 
-        if type(self.model.grid[self.pos[0]][self.pos[1]-1]) is Ant:
+        if (type(self.model.grid[self.pos[0]][self.pos[1]-1]) is Ant or 
+            type(self.model.grid[self.pos[0]][self.pos[1]-1]) is Fence):
             Fy += 1
-        if type(self.model.grid[self.pos[0]][self.pos[1]+1]) is Ant:
+        if (type(self.model.grid[self.pos[0]][self.pos[1]+1]) is Ant or 
+            type(self.model.grid[self.pos[0]][self.pos[1]+1]) is Fence):
             Fy -= 1
 
         # Magnitude of the force
@@ -95,40 +91,26 @@ class Ant(Agent):
         return n
 
     def move(self):
-        ## check if the ants can go into the internal
-        if self.pos in ants_init:
-            if self.random.uniform(0, 1) > 0.5:
-                new_position = self.random.choice(brood_init)
-                if self.model.grid.is_cell_empty(new_position) == True:
-                    self.model.grid.move_agent(self, new_position)
-        else:
-            Fx, Fy, F = self.force_calc()
-            if F == 0:
-                # When there are no neighbors, move into any neighbor
-                possible_steps = self.model.grid.get_neighborhood(self.pos,moore=False,include_center=False)
-                new_position = self.random.choice(possible_steps)
-                if self.model.grid.is_cell_empty(new_position) == True:
-                    self.model.grid.move_agent(self, new_position)
-                ## if the next position is boundary, then go back to the ants initial place
-                elif type(self.model.grid[new_position[0]][new_position[1]]) is Fence:
-                    new_position = self.random.choice(ants_init)
-                    if self.model.grid.is_cell_empty(new_position) == True:
-                        self.model.grid.move_agent(self, new_position)
 
-            else:
-                # Calculate the new preferred direction, rounding to nearest integer
-                c = (int(round(Fx / F)), int(round(Fy / F)))
-                new_position = (self.pos[0] + c[0], self.pos[1] + c[1])
+        Fx, Fy, F = self.force_calc()
 
-                    # ant if it has moved onto the boundary and it will go back to the area
-                if type(self.model.grid[new_position[0]][new_position[1]]) is Fence:
-                    new_position = self.random.choice(ants_init)
-                    if self.model.grid.is_cell_empty(new_position) == True:
-                        self.model.grid.move_agent(self, new_position)
-                ## if it is empty then move into this place
-                elif self.model.grid.is_cell_empty(new_position):
-                    self.model.grid.move_agent(self, new_position)
+        if F != 0:
+            # Calculate the new preferred direction, rounding to nearest integer
+            c = (int(round(Fx / F)), int(round(Fy / F)))
 
+            c = self.stoch_move(c) # For deterministic model comment this line out
+
+            new_position = (self.pos[0] + c[0], self.pos[1] + c[1])
+
+            # ant if it has moved onto the boundary and it will be removed
+            if new_position in neigh_bound:
+                
+                self.model.grid.remove_agent(self)
+                self.model.schedule.remove(self)
+
+            ## if it is empty then move into this place
+            elif self.model.grid.is_cell_empty(new_position):
+                self.model.grid.move_agent(self, new_position)
 
     def step(self):
         self.move()

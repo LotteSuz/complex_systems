@@ -25,51 +25,42 @@ class Anthill(Model):
         self.schedule = RandomActivation(self)
         self.running = True
         self.ids = [i for i in range(self.num_ants)]
+        self.internalrate = 0.2
+        self.ant_id = 1
 
         # List containing all coordinates of the boundary, initial ants location and brood location
         self.bound_vals = []
         self.ants_init = []
         self.brood_init = []
+        self.neigh_bound = []
 
         for i in range(WIDTH):
             for j in range(HEIGHT):
-                if i == 2 and 2 <= j <= HEIGHT - 3:
-                    self.bound_vals.append((i, j))
-                elif i == WIDTH - 3 and 2 <= j <= HEIGHT - 3:
-                    self.bound_vals.append((i, j))
-                elif 3 <= i <= WIDTH - 4 and j == 2:  ##aviod overlap
-                    self.bound_vals.append((i, j))
-                elif 3 <= i <= WIDTH - 4 and j == HEIGHT - 3:  ##aviod overlap
-                    self.bound_vals.append((i, j))
-                elif 2 < i < WIDTH - 3 and 2 < j < HEIGHT - 3:
-                    self.brood_init.append((i, j))
-                else:
-                    self.ants_init.append((i, j))
+                if i == 0 or j == 0 or i == WIDTH-1 or j == HEIGHT-1:
+                    self.bound_vals.append((i,j))
+                elif i == 1 or i == WIDTH - 2 or j == 1 or j == HEIGHT-2:
+                    self.neigh_bound.append((i,j))
 
-        ##put the ants outside the boundary
-        for i in range(self.num_ants):
-            while True:
-                antslocation = self.random.choice(self.ants_init)
-                if self.grid.is_cell_empty((antslocation[0],  antslocation[1])) == True:
-                    a = Ant(i, self)
-                    self.schedule.add(a)
-                    self.grid.place_agent(a, (antslocation[0],  antslocation[1]))
-                    break
-                else:
-                    continue
+                # if i == 2 and 2 <= j <= HEIGHT - 3:
+                #     self.bound_vals.append((i, j))
+                # elif i == WIDTH - 3 and 2 <= j <= HEIGHT - 3:
+                #     self.bound_vals.append((i, j))
+                # elif 3 <= i <= WIDTH - 4 and j == 2:  ##aviod overlap
+                #     self.bound_vals.append((i, j))
+                # elif 3 <= i <= WIDTH - 4 and j == HEIGHT - 3:  ##aviod overlap
+                #     self.bound_vals.append((i, j))
+                # elif 2 < i < WIDTH - 3 and 2 < j < HEIGHT - 3:
+                #     self.brood_init.append((i, j))
+                # else:
+                #     self.ants_init.append((i, j))
 
-        # # Get initial coordinates for placing the ants
-        # xy = self.random.sample(bound_vals,self.init_ants)
-        #
-        # # Put ants on the grid
-        # for i in range(self.num_ants):
-        #     a = Ant(i, self)
-        #     self.schedule.add(a)
-        #
-        #     # First add only ten agents to random grid cell outside boundary
-        #     if i < self.init_ants:
-        #         self.grid.place_agent(a, xy[i])
+                # if i == 4 or i == WIDTH - 4 or j == 4 or j == HEIGHT-4:
+                #     self.neigh_bound.append((i,j))
 
+                # for i in range(1,WIDTH-1):
+                #     for j in range(1,HEIGHT-1):
+                #         if i == 1 or i == WIDTH-2 or j ==1 or j == (HEIGHT-2):
+                #             bound_vals.append((i,j))
 
 
         # Make a Fence boundary
@@ -87,32 +78,34 @@ class Anthill(Model):
         #     self.grid.place_agent(fe, (i[0], i[1]))
         #     k+=1
 
-        for i in range(self.num_brood):
-            while True:
-                x = random.randint(3,WIDTH-3)
-                y = random.randint(3, HEIGHT - 3)
+        # for i in range(self.num_brood):
+        #     while True:
+        #         x = random.randint(3,WIDTH-3)
+        #         y = random.randint(3, HEIGHT - 3)
 
-                if self.grid.is_cell_empty((x,  y)) == True:
-                    fe = Brood(i, self)
-                    self.grid.place_agent(fe, (x, y))
-                    break
-                else:
-                    continue
-
-
+        #         if self.grid.is_cell_empty((x,  y)) == True:
+        #             fe = Brood(i, self)
+        #             self.grid.place_agent(fe, (x, y))
+        #             break
+        #         else:
+        #             continue
 
 
     def step(self):
         '''Advance the model by one step.'''
 
+        # Add new ants into the internal area ont he boundary
+        for xy in self.neigh_bound:
 
+            # Add with probability internal rate and if the cell is empty
+            if self.random.uniform(0, 1) < self.internalrate and self.grid.is_cell_empty(xy) == True:
+
+                a = Ant(self.ant_id, self)
+
+                self.schedule.add(a)
+                self.grid.place_agent(a,xy)
+
+                self.ant_id += 1
+
+        # Move the ants
         self.schedule.step()
-
-        # Create one agent every timestep
-        # if len(self.ids) != 0:
-        #     a = Ant(self.ids.pop(), self)
-
-        #     self.schedule.add(a)
-        #     x = int((WIDTH - 1) / 2)
-        #     y = HEIGHT - 1
-        #     self.grid.place_agent(a, (x, y))
