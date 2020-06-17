@@ -133,7 +133,7 @@ class Anthill(Model):
             self.tau[site[0]][site[1]] = mean_tau_ant
 
 
-        ##calculate the sigma
+        ##calculate the sigmaa
         sigma = ((self.tau-mean_tau_ant)**2).sum()/((WIDTH-2)**2)
 
         ## rechange the boundary
