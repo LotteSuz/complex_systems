@@ -6,14 +6,14 @@ is everything that should occur every timestep. Events at every timestep are now
 from mesa import Model
 from mesa.time import RandomActivation
 from mesa.space import SingleGrid
+from mesa.datacollection import DataCollector
 
 from .agent import Ant, Brood,Fence
 
-import random
 import numpy as np
 
-WIDTH = 20
-HEIGHT = 20
+WIDTH = 25
+HEIGHT = 25
 
 
 class Anthill(Model):
@@ -28,6 +28,15 @@ class Anthill(Model):
         self.internalrate = 0.2
         self.ant_id = 1
 
+        self.tau = np.zeros((WIDTH,HEIGHT))
+
+        self.datacollector = DataCollector({"Total number of Ants": lambda m: self.get_total_ants_number(),
+                                            "mean tau": lambda m: self.evaluation()[0],
+                                            "sigma": lambda m: self.evaluation()[1],
+                                            "sigma*" :  lambda m: self.evaluation()[2],
+                                            })
+
+
         # List containing all coordinates of the boundary, initial ants location and brood location
         self.bound_vals = []
         self.ants_init = []
@@ -38,35 +47,19 @@ class Anthill(Model):
             for j in range(HEIGHT):
                 if i == 0 or j == 0 or i == WIDTH-1 or j == HEIGHT-1:
                     self.bound_vals.append((i,j))
-                elif i == 1 or i == WIDTH - 2 or j == 1 or j == HEIGHT-2:
+                if i == 1 or i == WIDTH - 2 or j == 1 or j == HEIGHT-2:
                     self.neigh_bound.append((i,j))
+                if 0<i<WIDTH - 1 and 0<j<HEIGHT-1:
+                    self.brood_init.append((i,j))
 
-                # if i == 2 and 2 <= j <= HEIGHT - 3:
-                #     self.bound_vals.append((i, j))
-                # elif i == WIDTH - 3 and 2 <= j <= HEIGHT - 3:
-                #     self.bound_vals.append((i, j))
-                # elif 3 <= i <= WIDTH - 4 and j == 2:  ##aviod overlap
-                #     self.bound_vals.append((i, j))
-                # elif 3 <= i <= WIDTH - 4 and j == HEIGHT - 3:  ##aviod overlap
-                #     self.bound_vals.append((i, j))
-                # elif 2 < i < WIDTH - 3 and 2 < j < HEIGHT - 3:
-                #     self.brood_init.append((i, j))
-                # else:
-                #     self.ants_init.append((i, j))
 
-                # if i == 4 or i == WIDTH - 4 or j == 4 or j == HEIGHT-4:
-                #     self.neigh_bound.append((i,j))
-
-                # for i in range(1,WIDTH-1):
-                #     for j in range(1,HEIGHT-1):
-                #         if i == 1 or i == WIDTH-2 or j ==1 or j == (HEIGHT-2):
-                #             bound_vals.append((i,j))
 
 
         # Make a Fence boundary
         b = 0
         for h in self.bound_vals:
             br = Fence(b,self)
+            # self.schedule.add(br)
             self.grid.place_agent(br,(h[0],h[1]))
             b += 1
 
@@ -109,3 +102,56 @@ class Anthill(Model):
 
         # Move the ants
         self.schedule.step()
+        self.datacollector.collect(self)
+
+    def get_total_ants_number(self):
+        total_ants=0
+        for (agents, _, _) in self.grid.coord_iter():
+            if type(agents) is Ant:
+                total_ants += 1
+        return total_ants
+
+    def evaluation(self):
+        ##creat a empty grid to store currently information
+        total_ants = np.zeros((WIDTH,HEIGHT))
+        ## count the number of currently information
+        for (agents, i, j) in self.grid.coord_iter():
+            if type(agents) is Ant:
+                total_ants[i][j] = 1
+            else:
+                total_ants[i][j] = 0
+        ##update the tau
+        self.tau = self.tau + total_ants
+        ##calcualte the mean tau
+        mean_tau_ant = self.tau.sum()/((WIDTH-2)**2)
+
+
+        ## we need to minus the mean tau so we need to ensure the result of boundary is zero
+        ## so we let the bounday equal mean_tau_ant in this way the (tau-mean_tau_ant) is zero of boundary
+        for site in self.neigh_bound:
+            # total_ants[site[0]][site[1]] = mean_tau_ant
+            self.tau[site[0]][site[1]] = mean_tau_ant
+
+
+        ##calculate the sigma
+        sigma = ((self.tau-mean_tau_ant)**2).sum()/((WIDTH-2)**2)
+
+        ## rechange the boundary
+        for site in self.neigh_bound:
+            self.tau[site[0]][site[1]] = 0
+        ##calculate the sigmastar
+        sigmastar = sigma/mean_tau_ant
+
+        return mean_tau_ant,np.sqrt(sigma),sigmastar
+
+
+
+
+
+
+
+
+
+
+
+

@@ -9,8 +9,8 @@ import numpy as np
 
 # ---> This is a bit messy here, but needed to calculate bound_vals 
 # for list of boundary coordinates, wasn't sure where else to put it
-WIDTH = 20
-HEIGHT = 20
+WIDTH = 25
+HEIGHT = 25
 bound_vals=[]
 neigh_bound=[]
 
@@ -66,7 +66,7 @@ class Ant(Agent):
                     if self.model.grid.is_cell_empty((self.pos[0] + x,self.pos[1] + y)) == True:
                         trials.append((x,y))
         w = []
-        beta = 1
+        beta = 5
         for i in trials:
             # The magnitude of vector difference c and c*
             d = np.sqrt((i[0] - c[0])**2 + (i[1] - c[1])**2)
