@@ -18,13 +18,10 @@ HEIGHT = 25
 
 class Anthill(Model):
     def __init__(self):
-        self.num_ants = 25
-        self.init_ants = 10
-        self.num_brood = 10
+
         self.grid = SingleGrid(WIDTH, HEIGHT, False)
         self.schedule = RandomActivation(self)
         self.running = True
-        self.ids = [i for i in range(self.num_ants)]
         self.internalrate = 0.2
         self.ant_id = 1
         self.tau = np.zeros((WIDTH,HEIGHT))
@@ -34,11 +31,8 @@ class Anthill(Model):
                                             "sigma*" :  lambda m: self.evaluation3(),
                                             })
 
-
         # List containing all coordinates of the boundary, initial ants location and brood location
         self.bound_vals = []
-        self.ants_init = []
-        self.brood_init = []
         self.neigh_bound = []
         self.datacollector.collect(self)
 
@@ -48,40 +42,14 @@ class Anthill(Model):
                     self.bound_vals.append((i,j))
                 if i == 1 or i == WIDTH - 2 or j == 1 or j == HEIGHT-2:
                     self.neigh_bound.append((i,j))
-                if 0<i<WIDTH - 1 and 0<j<HEIGHT-1:
-                    self.brood_init.append((i,j))
-
-
-
 
         # Make a Fence boundary
         b = 0
         for h in self.bound_vals:
             br = Fence(b,self)
-            # self.schedule.add(br)
+
             self.grid.place_agent(br,(h[0],h[1]))
             b += 1
-
-        ##Put Broods on the grid in the boundary
-
-        # k=0
-        # for i in brood_init:
-        #     fe = Brood(k, self)
-        #     self.grid.place_agent(fe, (i[0], i[1]))
-        #     k+=1
-
-        # for i in range(self.num_brood):
-        #     while True:
-        #         x = random.randint(3,WIDTH-3)
-        #         y = random.randint(3, HEIGHT - 3)
-
-        #         if self.grid.is_cell_empty((x,  y)) == True:
-        #             fe = Brood(i, self)
-        #             self.grid.place_agent(fe, (x, y))
-        #             break
-        #         else:
-        #             continue
-
 
     def step(self):
         '''Advance the model by one step.'''
@@ -102,6 +70,13 @@ class Anthill(Model):
         # Move the ants
         self.schedule.step()
         self.datacollector.collect(self)
+
+        # with open("data/p02_b0_tau.txt", "a") as myfile:
+        #     myfile.write(str(self.mean_tau_ant) + '\n')
+        # with open("data/p02_b0_sigma.txt", "a") as myfile:
+        #     myfile.write(str(self.sigma) + '\n')
+        # with open("data/p02_b0_sigmastar.txt","a") as myfile:
+        #     myfile.write(str(self.sigmastar) + "\n")
 
     def get_total_ants_number(self):
         total_ants=0
@@ -146,9 +121,9 @@ class Anthill(Model):
 
     def evaluation3(self):
         ##calculate the sigmastar
-        sigmastar = np.sqrt(self.sigma)/self.mean_tau_ant
+        self.sigmastar = np.sqrt(self.sigma)/self.mean_tau_ant
 
-        return sigmastar
+        return self.sigmastar
 
 
 
