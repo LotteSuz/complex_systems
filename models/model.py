@@ -8,7 +8,7 @@ from mesa.time import RandomActivation
 from mesa.space import SingleGrid
 from mesa.datacollection import DataCollector
 
-from agent import Ant, Brood,Fence
+from .agent import Ant, Brood,Fence
 
 import numpy as np
 
@@ -29,9 +29,9 @@ class Anthill(Model):
         self.ant_id = 1
         self.tau = np.zeros((WIDTH,HEIGHT))
         self.datacollector = DataCollector({"Total number of Ants": lambda m: self.get_total_ants_number(),
-                                            "mean tau": lambda m: self.evaluation()[0],
-                                            "sigma": lambda m: self.evaluation()[1],
-                                            "sigma*" :  lambda m: self.evaluation()[2],
+                                            "mean tau": lambda m: self.evaluation1(),
+                                            "sigma": lambda m: self.evaluation2(),
+                                            "sigma*" :  lambda m: self.evaluation3(),
                                             })
 
 
@@ -110,7 +110,7 @@ class Anthill(Model):
                 total_ants += 1
         return total_ants
 
-    def evaluation(self):
+    def evaluation1(self):
         ##creat a empty grid to store currently information
         total_ants = np.zeros((WIDTH,HEIGHT))
 
@@ -123,26 +123,32 @@ class Anthill(Model):
         ##update the tau
         self.tau = self.tau + total_ants
         ##calcualte the mean tau
-        mean_tau_ant = self.tau.sum()/((WIDTH-2)**2)
+        self.mean_tau_ant = self.tau.sum()/((WIDTH-2)**2)
+        return self.mean_tau_ant
+
+    def evaluation2(self):
 
 
         ## we need to minus the mean tau so we need to ensure the result of boundary is zero
         ## so we let the bounday equal mean_tau_ant in this way the (tau-mean_tau_ant) is zero of boundary
         for site in self.bound_vals:
-            self.tau[site[0]][site[1]] = mean_tau_ant
+            self.tau[site[0]][site[1]] = self.mean_tau_ant
 
 
         ##calculate the sigmaa
-        sigma = ((self.tau-mean_tau_ant)**2).sum()/((WIDTH-2)**2)
+        self.sigma = ((self.tau-self.mean_tau_ant)**2).sum()/((WIDTH-2)**2)
 
         ## rechange the boundaryy
         for site in self.bound_vals:
             self.tau[site[0]][site[1]] = 0
 
-        ##calculate the sigmastar
-        sigmastar = sigma/mean_tau_ant
+        return np.sqrt(self.sigma)
 
-        return mean_tau_ant,np.sqrt(sigma),sigmastar
+    def evaluation3(self):
+        ##calculate the sigmastar
+        sigmastar = self.sigma/self.mean_tau_ant
+
+        return sigmastar
 
 
 
