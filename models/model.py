@@ -27,9 +27,7 @@ class Anthill(Model):
         self.ids = [i for i in range(self.num_ants)]
         self.internalrate = 0.2
         self.ant_id = 1
-
         self.tau = np.zeros((WIDTH,HEIGHT))
-
         self.datacollector = DataCollector({"Total number of Ants": lambda m: self.get_total_ants_number(),
                                             "mean tau": lambda m: self.evaluation()[0],
                                             "sigma": lambda m: self.evaluation()[1],
@@ -114,6 +112,7 @@ class Anthill(Model):
     def evaluation(self):
         ##creat a empty grid to store currently information
         total_ants = np.zeros((WIDTH,HEIGHT))
+
         ## count the number of currently information
         for (agents, i, j) in self.grid.coord_iter():
             if type(agents) is Ant:
@@ -128,8 +127,7 @@ class Anthill(Model):
 
         ## we need to minus the mean tau so we need to ensure the result of boundary is zero
         ## so we let the bounday equal mean_tau_ant in this way the (tau-mean_tau_ant) is zero of boundary
-        for site in self.neigh_bound:
-            # total_ants[site[0]][site[1]] = mean_tau_ant
+        for site in self.bound_vals:
             self.tau[site[0]][site[1]] = mean_tau_ant
 
 
@@ -137,9 +135,10 @@ class Anthill(Model):
         sigma = ((self.tau-mean_tau_ant)**2).sum()/((WIDTH-2)**2)
 
         ## rechange the boundary
-        for site in self.neigh_bound:
+        for site in self.bound_vals:
             self.tau[site[0]][site[1]] = 0
-        ##calculate the sigmasta
+
+        ##calculate the sigmastar
         sigmastar = sigma/mean_tau_ant
 
         return mean_tau_ant,np.sqrt(sigma),sigmastar
