@@ -8,7 +8,7 @@ from mesa.time import RandomActivation
 from mesa.space import SingleGrid
 from mesa.datacollection import DataCollector
 
-from .agent import Ant, Brood,Fence
+from agent import Ant, Brood,Fence
 
 import numpy as np
 
@@ -40,6 +40,7 @@ class Anthill(Model):
         self.ants_init = []
         self.brood_init = []
         self.neigh_bound = []
+        self.datacollector.collect(self)
 
         for i in range(WIDTH):
             for j in range(HEIGHT):
@@ -142,6 +143,9 @@ class Anthill(Model):
         sigmastar = sigma/mean_tau_ant
 
         return mean_tau_ant,np.sqrt(sigma),sigmastar
+
+
+
 
 
 

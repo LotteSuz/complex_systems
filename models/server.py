@@ -7,8 +7,8 @@ from mesa.visualization.ModularVisualization import ModularServer
 from mesa.visualization.modules import ChartModule
 
 
-from .model import Anthill
-from .agent import Ant, Brood,Fence
+from model import Anthill
+from agent import Ant, Brood,Fence
 
 # IMPORTANT: the WIDTH and HEIGHT parameters are also in model.py; make sure
 # to change those as well if you want to adjust the grid size
