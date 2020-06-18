@@ -146,7 +146,7 @@ class Anthill(Model):
 
     def evaluation3(self):
         ##calculate the sigmastar
-        sigmastar = self.sigma/self.mean_tau_ant
+        sigmastar = np.sqrt(self.sigma)/self.mean_tau_ant
 
         return sigmastar
 
