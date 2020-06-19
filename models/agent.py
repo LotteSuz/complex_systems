@@ -66,7 +66,7 @@ class Ant(Agent):
                     if self.model.grid.is_cell_empty((self.pos[0] + x,self.pos[1] + y)) == True:
                         trials.append((x,y))
         w = []
-        beta = 0
+        beta = 5
         for i in trials:
             # The magnitude of vector difference c and c*
             d = np.sqrt((i[0] - c[0])**2 + (i[1] - c[1])**2)
@@ -104,13 +104,23 @@ class Ant(Agent):
 
             # ant if it has moved onto the boundary and it will be removed
             if new_position in neigh_bound:
-                
                 self.model.grid.remove_agent(self)
                 self.model.schedule.remove(self)
 
             ## if it is empty then move into this place
             elif self.model.grid.is_cell_empty(new_position):
                 self.model.grid.move_agent(self, new_position)
+
+            # Remove if new pos is already occupied but current pos is on boundary
+            elif self.pos in neigh_bound:
+                self.model.grid.remove_agent(self)
+                self.model.schedule.remove(self)
+
+        # Remove if F=0 and cur pos is on the boundary
+        elif self.pos in neigh_bound:
+            self.model.grid.remove_agent(self)
+            self.model.schedule.remove(self)
+
 
     def step(self):
         self.move()
