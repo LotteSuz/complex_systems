@@ -11,14 +11,16 @@ import numpy as np
 # for list of boundary coordinates, wasn't sure where else to put it
 WIDTH = 25
 HEIGHT = 25
-bound_vals=[]
-neigh_bound=[]
+# bound_vals=[]
+# neigh_bound=[]
 
 
-for i in range(WIDTH):
-    for j in range(HEIGHT):
-        if (i == 1 or i == WIDTH - 2) or (j == 1 or j == HEIGHT-2):
-            neigh_bound.append((i,j))
+# # for i in range(WIDTH):
+# #     for j in range(HEIGHT):
+# #         if (i == 1 or i == WIDTH - 2) or (j == 1 or j == HEIGHT-2):
+# #             neigh_bound.append((i,j))
+
+
 
 class Ant(Agent):
     def __init__(self, id, model):

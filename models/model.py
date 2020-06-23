@@ -9,6 +9,8 @@ from mesa.space import SingleGrid
 from mesa.datacollection import DataCollector
 import pickle
 
+import matplotlib.pyplot as plt # REMOVE THIS LATER!!!
+
 from .agent import Ant, Brood,Fence
 
 import numpy as np
@@ -40,12 +42,11 @@ class Anthill(Model):
         self.neigh_bound = []
         self.datacollector.collect(self)
 
-        for i in range(WIDTH):
-            for j in range(HEIGHT):
-                if i == 0 or j == 0 or i == WIDTH-1 or j == HEIGHT-1:
-                    self.bound_vals.append((i,j))
-                if i == 1 or i == WIDTH - 2 or j == 1 or j == HEIGHT-2:
-                    self.neigh_bound.append((i,j))
+        # Make the bound_vals and neigh_bound lists by one of the following:
+        # self.nowalls()
+        self.onewall()
+        # self.twowalls()
+        # self.threewalls()
 
         # Make a Fence boundary
         b = 0
@@ -71,12 +72,11 @@ class Anthill(Model):
 
                 self.ant_id += 1
 
-
         # Move the ants
         self.schedule.step()
         self.datacollector.collect(self)
 
-        # Remove all ants on bounary
+        # Remove all ants in neigh_bound
 
         for (agents, i, j) in self.grid.coord_iter():
             if (i,j) in self.neigh_bound and type(agents) is Ant:
@@ -88,7 +88,7 @@ class Anthill(Model):
         data_sigma.append(np.sqrt(self.sigma))
         data_sigmastar.append(self.sigmastar)
 
-        if len(data_sigmastar) > 20:
+        if len(data_sigmastar) > 2000:
             # if abs(data_sigmastar[-2] - data_sigmastar[-1]) < 0.0000001:
             try:
                 # TAU
@@ -142,6 +142,42 @@ class Anthill(Model):
         #     myfile.write(str(np.sqrt(self.sigma)) + '\n')
         # with open("datasigmastar2_new.txt","a") as myfile:
         #     myfile.write(str(self.sigmastar) + "\n")
+
+    def nowalls(self):
+        # For model without walls:
+        for i in range(WIDTH):
+            for j in range(HEIGHT):
+                if i == 0 or j == 0 or i == WIDTH-1 or j == HEIGHT-1:
+                    self.bound_vals.append((i,j))
+                if i == 1 or i == WIDTH - 2 or j == 1 or j == HEIGHT-2:
+                    self.neigh_bound.append((i,j))
+
+    def onewall(self):
+        # For model with ONE wall:
+        for i in range(WIDTH):
+            for j in range(HEIGHT):
+                if i == 0 or j == 0 or i == WIDTH-1 or j == HEIGHT-1:
+                    self.bound_vals.append((i,j))
+                if i == WIDTH - 2 or j == 1 or j == HEIGHT-2:
+                    self.neigh_bound.append((i,j))
+
+    def twowalls(self):
+        # For model with TWO walls:
+        for i in range(WIDTH):
+            for j in range(HEIGHT):
+                if i == 0 or j == 0 or i == WIDTH-1 or j == HEIGHT-1:
+                    self.bound_vals.append((i,j))
+                if j == 1 or j == HEIGHT-2:
+                    self.neigh_bound.append((i,j))
+
+    def threewalls(self):
+        # For model with THREE walls:
+        for i in range(WIDTH):
+            for j in range(HEIGHT):
+                if i == 0 or j == 0 or i == WIDTH-1 or j == HEIGHT-1:
+                    self.bound_vals.append((i,j))
+                if j == HEIGHT-2:
+                    self.neigh_bound.append((i,j))
 
     def get_total_ants_number(self):
         total_ants=0
