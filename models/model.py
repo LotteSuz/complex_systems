@@ -12,8 +12,8 @@ from .agent import Ant, Brood,Fence
 
 import numpy as np
 
-WIDTH = 25
-HEIGHT = 25
+WIDTH = 15
+HEIGHT = 15
 
 
 class Anthill(Model):
@@ -53,8 +53,8 @@ class Anthill(Model):
 
     def step(self):
         '''Advance the model by one step.'''
-
         # Add new ants into the internal area ont he boundary
+
         for xy in self.neigh_bound:
 
             # Add with probability internal rate and if the cell is empty
@@ -65,17 +65,27 @@ class Anthill(Model):
                 self.schedule.add(a)
                 self.grid.place_agent(a,xy)
 
-                self.ant_id += 1
+                self.ant_id += 1                   
+
 
         # Move the ants
         self.schedule.step()
         self.datacollector.collect(self)
 
-        # with open("data/p02_b0_tau.txt", "a") as myfile:
+        # Remove all ants on bounary
+
+        for (agents, i, j) in self.grid.coord_iter():
+            if (i,j) in self.neigh_bound and type(agents) is Ant:
+                
+                self.grid.remove_agent(agents)
+                self.schedule.remove(agents)
+
+
+        # with open("tau2_new.txt", "a") as myfile:
         #     myfile.write(str(self.mean_tau_ant) + '\n')
-        # with open("data/p02_b0_sigma.txt", "a") as myfile:
-        #     myfile.write(str(self.sigma) + '\n')
-        # with open("data/p02_b0_sigmastar.txt","a") as myfile:
+        # with open("sigma2_new.txt", "a") as myfile:
+        #     myfile.write(str(np.sqrt(self.sigma)) + '\n')
+        # with open("datasigmastar2_new.txt","a") as myfile:
         #     myfile.write(str(self.sigmastar) + "\n")
 
     def get_total_ants_number(self):
@@ -86,56 +96,44 @@ class Anthill(Model):
         return total_ants
 
     def evaluation1(self):
+
         ##creat a empty grid to store currently information
         total_ants = np.zeros((WIDTH,HEIGHT))
 
         ## count the number of currently information
         for (agents, i, j) in self.grid.coord_iter():
+
             if type(agents) is Ant:
                 total_ants[i][j] = 1
             else:
                 total_ants[i][j] = 0
+
         ##update the tau
         self.tau = self.tau + total_ants
+
         ##calcualte the mean tau
         self.mean_tau_ant = self.tau.sum()/((WIDTH-2)**2)
+
         return self.mean_tau_ant
 
     def evaluation2(self):
-
 
         ## we need to minus the mean tau so we need to ensure the result of boundary is zero
         ## so we let the bounday equal mean_tau_ant in this way the (tau-mean_tau_ant) is zero of boundary
         for site in self.bound_vals:
             self.tau[site[0]][site[1]] = self.mean_tau_ant
 
-
-        ##calculate the sigmaa
+        ## calculate the sigmaa
         self.sigma = ((self.tau-self.mean_tau_ant)**2).sum()/((WIDTH-2)**2)
-
+        
         ## rechange the boundaryy
         for site in self.bound_vals:
             self.tau[site[0]][site[1]] = 0
-
+        
         return np.sqrt(self.sigma)
 
     def evaluation3(self):
-        ##calculate the sigmastar
-        self.sigmastar = np.sqrt(self.sigma)/self.mean_tau_ant
+        ## calculate the sigmastar
+        self.sigmastar = np.sqrt(self.sigma) / self.mean_tau_ant
 
         return self.sigmastar
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
