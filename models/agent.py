@@ -7,10 +7,10 @@ Fence:Boundarary
 from mesa import Agent
 import numpy as np
 
-# ---> This is a bit messy here, but needed to calculate bound_vals 
+# ---> This is a bit messy here, but needed to calculate bound_vals
 # for list of boundary coordinates, wasn't sure where else to put it
-WIDTH = 15
-HEIGHT = 15
+WIDTH = 25
+HEIGHT = 25
 bound_vals=[]
 neigh_bound=[]
 
@@ -29,22 +29,22 @@ class Ant(Agent):
         """ Calculate the force acting on the ant. """
 
         ##check the neighbor if it is Ant or fence
-        # Calculate the force in x and y direction 
+        # Calculate the force in x and y direction
 
         Fx = 0
 
-        if (type(self.model.grid[self.pos[0]-1][self.pos[1]]) is Ant or 
+        if (type(self.model.grid[self.pos[0]-1][self.pos[1]]) is Ant or
             type(self.model.grid[self.pos[0]-1][self.pos[1]]) is Fence):
             Fx += 1
-        if (type(self.model.grid[self.pos[0]+1][self.pos[1]]) is Ant or 
+        if (type(self.model.grid[self.pos[0]+1][self.pos[1]]) is Ant or
             type(self.model.grid[self.pos[0]+1][self.pos[1]]) is Fence):
             Fx -= 1
 
-        Fy = 0 
-        if (type(self.model.grid[self.pos[0]][self.pos[1]-1]) is Ant or 
+        Fy = 0
+        if (type(self.model.grid[self.pos[0]][self.pos[1]-1]) is Ant or
             type(self.model.grid[self.pos[0]][self.pos[1]-1]) is Fence):
             Fy += 1
-        if (type(self.model.grid[self.pos[0]][self.pos[1]+1]) is Ant or 
+        if (type(self.model.grid[self.pos[0]][self.pos[1]+1]) is Ant or
             type(self.model.grid[self.pos[0]][self.pos[1]+1]) is Fence):
             Fy -= 1
 
@@ -61,13 +61,13 @@ class Ant(Agent):
             for y in [-1,0,1]:
                 # Skip the centre and the preferered direction c
                 if (x!=0 or y !=0):
- 
+
                     # if self.model.grid.is_cell_empty((self.pos[0] + x,self.pos[1] + y)) == True:
                     trials.append((x,y))
 
         w = []
         beta = 5
-        
+
         for i in trials:
             # The magnitude of vector difference c and c*
             d = np.sqrt((i[0] - c[0])**2 + (i[1] - c[1])**2)
@@ -99,10 +99,10 @@ class Ant(Agent):
         if F != 0:
         # Calculate the new preferred direction, rounding to nearest integer
             c = (int(round(Fx / F)), int(round(Fy / F)))
-        else: 
+        else:
             c = (0,0)
-            
-        c = self.stoch_move(c) # For deterministic model comment this line out
+
+        # c = self.stoch_move(c) # For deterministic model comment this line out
 
         new_position = (self.pos[0] + c[0], self.pos[1] + c[1])
 
@@ -137,4 +137,3 @@ class Brood(Agent):
 class Fence(Agent):
     def __init__(self, id, model):
         super().__init__(id, model)
-

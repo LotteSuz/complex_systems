@@ -7,13 +7,17 @@ from mesa import Model
 from mesa.time import RandomActivation
 from mesa.space import SingleGrid
 from mesa.datacollection import DataCollector
+import pickle
 
 from .agent import Ant, Brood,Fence
 
 import numpy as np
 
-WIDTH = 15
-HEIGHT = 15
+WIDTH = 25
+HEIGHT = 25
+data_tau = []
+data_sigma = []
+data_sigmastar = []
 
 
 class Anthill(Model):
@@ -65,7 +69,7 @@ class Anthill(Model):
                 self.schedule.add(a)
                 self.grid.place_agent(a,xy)
 
-                self.ant_id += 1                   
+                self.ant_id += 1
 
 
         # Move the ants
@@ -76,10 +80,61 @@ class Anthill(Model):
 
         for (agents, i, j) in self.grid.coord_iter():
             if (i,j) in self.neigh_bound and type(agents) is Ant:
-                
+
                 self.grid.remove_agent(agents)
                 self.schedule.remove(agents)
 
+        data_tau.append(self.mean_tau_ant)
+        data_sigma.append(np.sqrt(self.sigma))
+        data_sigmastar.append(self.sigmastar)
+
+        if len(data_sigmastar) > 20:
+            # if abs(data_sigmastar[-2] - data_sigmastar[-1]) < 0.0000001:
+            try:
+                # TAU
+                with open("results/m1_tau_inf.pkl", 'rb') as f:
+                    tau_old = pickle.load(f)
+                    tau_old[int(len(tau_old)+1)] = data_tau
+                    f.close()
+                pickle.dump(tau_old, open("results/m1_tau_inf.pkl", 'wb'))
+
+            except:
+                pickle.dump({1:data_tau}, open("results/m1_tau_inf.pkl", 'wb'))
+
+            try:
+                # SIGMA
+                with open("results/m1_sigma_inf.pkl", 'rb') as f:
+                    sigma_old = pickle.load(f)
+                    sigma_old[int(len(sigma_old)+1)] = data_sigma
+                    f.close()
+                pickle.dump(sigma_old, open("results/m1_sigma_inf.pkl", 'wb'))
+
+            except:
+                pickle.dump({1:data_sigma}, open("results/m1_sigma_inf.pkl", 'wb'))
+
+            try:
+                # SIGMASTAR
+                with open("results/m1_sigmastar_inf.pkl", 'rb') as f:
+                    sigmastar_old = pickle.load(f)
+                    sigmastar_old[int(len(sigmastar_old)+1)] = data_sigmastar
+                    f.close()
+                pickle.dump(sigmastar_old, open("results/m1_sigmastar_inf.pkl", 'wb'))
+
+            except:
+                pickle.dump({1:data_sigmastar}, open("results/m1_sigmastar_inf.pkl", 'wb'))
+
+            try:
+                # MATRIX
+                with open("results/m1_matrix_inf.pkl", 'rb') as f:
+                    matrix_old = pickle.load(f)
+                    matrix_old[int(len(matrix_old)+1)] = self.tau
+                    f.close()
+                pickle.dump(matrix_old, open("results/m1_matrix_inf.pkl", 'wb'))
+
+            except:
+                pickle.dump({1:self.tau}, open("results/m1_matrix_inf.pkl", 'wb'))
+
+            self.running = False
 
         # with open("tau2_new.txt", "a") as myfile:
         #     myfile.write(str(self.mean_tau_ant) + '\n')
@@ -125,11 +180,11 @@ class Anthill(Model):
 
         ## calculate the sigmaa
         self.sigma = ((self.tau-self.mean_tau_ant)**2).sum()/((WIDTH-2)**2)
-        
+
         ## rechange the boundaryy
         for site in self.bound_vals:
             self.tau[site[0]][site[1]] = 0
-        
+
         return np.sqrt(self.sigma)
 
     def evaluation3(self):
